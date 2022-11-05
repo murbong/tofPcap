@@ -1,5 +1,5 @@
-import pkg from 'cap';
-const { Cap, decoders } = pkg;
+import capa from 'cap';
+const { Cap, decoders } = capa;
 
 import appRoot from 'app-root-path'; // root 경로를 가져오기 위해 사용
 
@@ -7,10 +7,9 @@ import { writeFileSync,readFileSync } from 'fs';
 
 import readlineSync from 'readline-sync';
 
-import toast from 'powertoast';
-
 import cron from 'node-cron';
-import { hasUncaughtExceptionCaptureCallback } from 'process';
+
+import notifier from 'node-notifier'
 
 const { PROTOCOL } = decoders;
 
@@ -142,7 +141,11 @@ c.on("packet", function (nbytes, trunc) {
                         var length = buf.readUint16LE(ret.offset + offset); // 여기도 뭔지 잘 모르겠음
                         offset += 2;
 
-                        offset += length;
+                        offset+=8;
+
+                        var playerLevel = buf.readUint32LE(ret.offset + offset);
+
+                        offset += length-8;
 
                         var length = buf.readUint32LE(ret.offset + offset); // 캐릭터 클래스 정보?
 
@@ -187,12 +190,11 @@ c.on("packet", function (nbytes, trunc) {
                             checksumDic[checksum] = true;
 
                             if(alertArray.some(alert=>message.includes(alert))){
-                                toast({
+                                notifier.notify({
                                     appID:"kekboom.kawaii",
                                     title: "타워 오브 판타지",
                                     message: `${nickname} : ${message.replace(/<[^>]*>/g, "")}`,
-                                  }).catch((err) => { 
-                                    console.error(err);
+                                    sound:true,
                                   })
                             }
 
@@ -203,7 +205,7 @@ c.on("packet", function (nbytes, trunc) {
                                 hour: '2-digit',
                                 minute: '2-digit',
                                 hour12: true,
-                               })} | [${chatClassDic[chatClass]}](${suppressor})(uid:${server}${uid})${nickname} : ${message.replace(/<[^>]*>/g, "")}`)
+                               })} | [${chatClassDic[chatClass]}](${suppressor})(uid:${server}${uid})(${playerLevel})${nickname} : ${message.replace(/<[^>]*>/g, "")}`)
 
                             console.log(`Frame : ${avatarframe}`);
 
